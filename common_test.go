@@ -114,7 +114,10 @@ func getTestTokenWithKid(audience []string, issuer string, expTime time.Time, al
 	return raw
 }
 
-func genNewTestServer(genJWKS bool) (JWKClientOptions, string, string, error) {
+func genNewTestServer(genJWKS bool, contentType string) (JWKClientOptions, string, string, error) {
+	if len(contentType) == 0 {
+		contentType = "application/json"
+	}
 	// Generate JWKs
 	jsonWebKeyRS256 := genRSASSAJWK(jose.RS256, "keyRS256")
 	jsonWebKeyES384 := genECDSAJWK(jose.ES384, "keyES384")
@@ -135,7 +138,7 @@ func genNewTestServer(genJWKS bool) (JWKClientOptions, string, string, error) {
 	tokenES384 := getTestTokenWithKid(defaultAudience, defaultIssuer, time.Now().Add(24*time.Hour), jose.ES384, jsonWebKeyES384, "keyES384")
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Type", contentType)
 		fmt.Fprintln(w, string(value))
 	}))
 	return JWKClientOptions{URI: ts.URL}, tokenRS256, tokenES384, err

@@ -47,27 +47,34 @@ func (mockKC *mockKeyCacher) Add(keyID string, webKeys []jose.JSONWebKey) (*jose
 }
 
 func TestJWKDownloadKeySuccess(t *testing.T) {
-	opts, tokenRS256, tokenES384, err := genNewTestServer(true)
-	if err != nil {
-		t.Error(err)
-		t.FailNow()
-	}
-	client := NewJWKClient(opts, nil)
-
-	keys, err := client.downloadKeys()
-	if err != nil || len(keys) < 1 {
-		t.Errorf("The keys should have been correctly received: %v", err)
-		t.FailNow()
+	allowedContentTypes := []string{
+		"application/json",
+		"application/jwk-set+json",
 	}
 
-	for _, token := range []string{tokenRS256, tokenES384} {
-		req, _ := http.NewRequest("", "http://localhost", nil)
-		headerValue := fmt.Sprintf("Bearer %s", token)
-		req.Header.Add("Authorization", headerValue)
-
-		_, err = client.GetSecret(req)
+	for _, ct := range allowedContentTypes {
+		opts, tokenRS256, tokenES384, err := genNewTestServer(true, ct)
 		if err != nil {
-			t.Errorf("Should be considered as valid, but failed with error: " + err.Error())
+			t.Error(err)
+			t.FailNow()
+		}
+		client := NewJWKClient(opts, nil)
+
+		keys, err := client.downloadKeys()
+		if err != nil || len(keys) < 1 {
+			t.Errorf("The keys should have been correctly received: %v", err)
+			t.FailNow()
+		}
+
+		for _, token := range []string{tokenRS256, tokenES384} {
+			req, _ := http.NewRequest("", "http://localhost", nil)
+			headerValue := fmt.Sprintf("Bearer %s", token)
+			req.Header.Add("Authorization", headerValue)
+
+			_, err = client.GetSecret(req)
+			if err != nil {
+				t.Errorf("Should be considered as valid, but failed with error: " + err.Error())
+			}
 		}
 	}
 }
@@ -91,7 +98,7 @@ func TestJWKDownloadKeyFailed(t *testing.T) {
 }
 
 func TestJWKDownloadKeyNoKeys(t *testing.T) {
-	opts, _, tokenES384, err := genNewTestServer(false)
+	opts, _, tokenES384, err := genNewTestServer(false, "")
 	client := NewJWKClient(opts, nil)
 
 	req, _ := http.NewRequest("", "http://localhost", nil)
@@ -104,7 +111,7 @@ func TestJWKDownloadKeyNoKeys(t *testing.T) {
 }
 
 func TestJWKDownloadKeyNotFound(t *testing.T) {
-	opts, _, _, err := genNewTestServer(true)
+	opts, _, _, err := genNewTestServer(true, "")
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -153,7 +160,7 @@ func TestJWKDownloadKeyInvalid(t *testing.T) {
 }
 
 func TestGetKeyOfJWKClient(t *testing.T) {
-	opts, _, _, err := genNewTestServer(true)
+	opts, _, _, err := genNewTestServer(true, "")
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -213,7 +220,7 @@ func TestGetKeyOfJWKClient(t *testing.T) {
 }
 
 func TestCreateJWKClientCustomCacher(t *testing.T) {
-	opts, _, _, err := genNewTestServer(true)
+	opts, _, _, err := genNewTestServer(true, "")
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -242,7 +249,7 @@ func TestCreateJWKClientCustomCacher(t *testing.T) {
 }
 
 func TestGetSecret(t *testing.T) {
-	opts, tokenRS256, _, err := genNewTestServer(true)
+	opts, tokenRS256, _, err := genNewTestServer(true, "")
 	if err != nil {
 		t.Error(err)
 		t.FailNow()
@@ -253,7 +260,7 @@ func TestGetSecret(t *testing.T) {
 }
 
 func TestJWKClient_customClient(t *testing.T) {
-	opts, tokenRS256, _, err := genNewTestServer(true)
+	opts, tokenRS256, _, err := genNewTestServer(true, "")
 	if err != nil {
 		t.Error(err)
 		t.FailNow()

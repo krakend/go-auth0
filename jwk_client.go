@@ -92,7 +92,25 @@ func (j *JWKClient) downloadKeys() ([]jose.JSONWebKey, error) {
 	}
 	defer resp.Body.Close()
 
-	if contentH := resp.Header.Get("Content-Type"); !strings.HasPrefix(contentH, "application/json") {
+	// check for valid content-types: https://datatracker.ietf.org/doc/html/rfc7517#section-8.5.1
+	// it could als be `application/jwk+json` for a single `jose.JSONWebToken`, but we expect
+	// to have a set.
+
+	// TODO: we could completely skip this test, and rely on the
+	// json decoder below, that would fail on invalid JSON
+	validContentTypes := []string{
+		"application/json",
+		"application/jwk-set+json",
+	}
+	contentH := resp.Header.Get("Content-Type")
+	err = ErrInvalidContentType
+	for _, vct := range validContentTypes {
+		if strings.HasPrefix(contentH, vct) {
+			err = nil
+			break
+		}
+	}
+	if err != nil {
 		return []jose.JSONWebKey{}, ErrInvalidContentType
 	}
 
