@@ -67,15 +67,29 @@ func NewConfigurationTrustProvider(provider SecretProvider, audience []string, i
 type JWTValidator struct {
 	config    Configuration
 	extractor RequestTokenExtractor
+	leeway    time.Duration
 }
 
 // NewValidator creates a new
-// validator with the provided configuration.
+// validator with the provided configuration and the default leeway.
 func NewValidator(config Configuration, extractor RequestTokenExtractor) *JWTValidator {
+	return NewValidatorWithLeeway(config, extractor, time.Second)
+}
+
+// NewValidatorWithLeeway creates a new
+// validator with the provided configuration.
+func NewValidatorWithLeeway(config Configuration, extractor RequestTokenExtractor, leeway time.Duration) *JWTValidator {
 	if extractor == nil {
 		extractor = RequestTokenExtractorFunc(FromHeader)
 	}
-	return &JWTValidator{config, extractor}
+	if leeway < time.Second {
+		leeway = time.Second
+	}
+	return &JWTValidator{
+		config:    config,
+		extractor: extractor,
+		leeway:    leeway,
+	}
 }
 
 // ValidateRequest validates the token within
@@ -109,7 +123,7 @@ func (v *JWTValidator) ValidateRequest(r *http.Request) (*jwt.JSONWebToken, erro
 	}
 
 	expected := v.config.expectedClaims.WithTime(time.Now())
-	err = claims.Validate(expected)
+	err = claims.ValidateWithLeeway(expected, v.leeway)
 	return token, err
 }
 
