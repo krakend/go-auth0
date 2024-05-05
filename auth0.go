@@ -92,14 +92,8 @@ func NewValidatorWithLeeway(config Configuration, extractor RequestTokenExtracto
 	}
 }
 
-// ValidateRequest validates the token within
-// the http request.
-func (v *JWTValidator) ValidateRequest(r *http.Request) (*jwt.JSONWebToken, error) {
-	token, err := v.extractor.Extract(r)
-	if err != nil {
-		return nil, err
-	}
-
+// Validate validates a jwt.JSONWebToken
+func (v *JWTValidator) Validate(token *jwt.JSONWebToken, secretKey interface{}) (*jwt.JSONWebToken, error) {
 	if len(token.Headers) < 1 {
 		return nil, ErrNoJWTHeaders
 	}
@@ -113,18 +107,39 @@ func (v *JWTValidator) ValidateRequest(r *http.Request) (*jwt.JSONWebToken, erro
 	}
 
 	claims := jwt.Claims{}
-	key, err := v.config.secretProvider.GetSecret(r)
-	if err != nil {
-		return nil, err
-	}
-
-	if err = token.Claims(key, &claims); err != nil {
+	if err := token.Claims(secretKey, &claims); err != nil {
 		return nil, err
 	}
 
 	expected := v.config.expectedClaims.WithTime(time.Now())
-	err = claims.ValidateWithLeeway(expected, v.leeway)
+	err := claims.ValidateWithLeeway(expected, v.leeway)
 	return token, err
+}
+
+// ValidateSigned validates a non parsed token in string form
+func (v *JWTValidator) ValidateSigned(s string, secretKey interface{}) (*jwt.JSONWebToken, error) {
+	if s == "" {
+		return nil, ErrTokenNotFound
+	}
+	token, err := jwt.ParseSigned(s)
+	if err != nil {
+		return nil, err
+	}
+	return v.Validate(token, secretKey)
+}
+
+// ValidateRequest validates the token within
+// the http request.
+func (v *JWTValidator) ValidateRequest(r *http.Request) (*jwt.JSONWebToken, error) {
+	token, err := v.extractor.Extract(r)
+	if err != nil {
+		return nil, err
+	}
+	key, err := v.config.secretProvider.GetSecret(r)
+	if err != nil {
+		return nil, err
+	}
+	return v.Validate(token, key)
 }
 
 // Claims unmarshall the claims of the provided token
