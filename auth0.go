@@ -34,31 +34,57 @@ func NewKeyProvider(key interface{}) SecretProvider {
 var (
 	// ErrNoJWTHeaders is returned when there are no headers in the JWT.
 	ErrNoJWTHeaders = errors.New("No headers in the token")
+	// ErrJWTFromTokenNotImplemented is returned when the secret provider cannot
+	// obtain a .
+	ErrJWTFromTokenNotImplemented = errors.New("Cannot extract JWT from Token: not implemented")
 )
+
+// TokenSecertProvider allows to extract the key ID from a JSONWebToken
+// directly, and get the secret from it
+type TokenSecretProvider interface {
+	SecretFromToken(token *jwt.JSONWebToken) (interface{}, error)
+}
+
+type nopTokenSecretProvider struct{}
+
+func (p *nopTokenSecretProvider) SecretFromToken(token *jwt.JSONWebToken) (interface{}, error) {
+	return nil, ErrJWTFromTokenNotImplemented
+}
 
 // Configuration contains
 // all the information about the
 // Auth0 service.
 type Configuration struct {
-	secretProvider SecretProvider
-	expectedClaims jwt.Expected
-	signIn         jose.SignatureAlgorithm
+	secretProvider      SecretProvider
+	expectedClaims      jwt.Expected
+	signIn              jose.SignatureAlgorithm
+	tokenSecretProvider TokenSecretProvider
 }
 
 // NewConfiguration creates a configuration for server
 func NewConfiguration(provider SecretProvider, audience []string, issuer string, method jose.SignatureAlgorithm) Configuration {
+	tokenSecretProvider, ok := provider.(TokenSecretProvider)
+	if !ok {
+		tokenSecretProvider = &nopTokenSecretProvider{}
+	}
 	return Configuration{
-		secretProvider: provider,
-		expectedClaims: jwt.Expected{Issuer: issuer, Audience: audience},
-		signIn:         method,
+		secretProvider:      provider,
+		expectedClaims:      jwt.Expected{Issuer: issuer, Audience: audience},
+		signIn:              method,
+		tokenSecretProvider: tokenSecretProvider,
 	}
 }
 
 // NewConfigurationTrustProvider creates a configuration for server with no enforcement for token sig alg type, instead trust provider
 func NewConfigurationTrustProvider(provider SecretProvider, audience []string, issuer string) Configuration {
+	tokenSecretProvider, ok := provider.(TokenSecretProvider)
+	if !ok {
+		tokenSecretProvider = &nopTokenSecretProvider{}
+	}
 	return Configuration{
-		secretProvider: provider,
-		expectedClaims: jwt.Expected{Issuer: issuer, Audience: audience},
+		secretProvider:      provider,
+		expectedClaims:      jwt.Expected{Issuer: issuer, Audience: audience},
+		tokenSecretProvider: tokenSecretProvider,
 	}
 }
 
@@ -117,7 +143,16 @@ func (v *JWTValidator) Validate(token *jwt.JSONWebToken, secretKey interface{}) 
 }
 
 // ValidateSigned validates a non parsed token in string form
-func (v *JWTValidator) ValidateSigned(s string, secretKey interface{}) (*jwt.JSONWebToken, error) {
+func (v *JWTValidator) ValidateToken(token *jwt.JSONWebToken) (*jwt.JSONWebToken, error) {
+	secretKey, err := v.config.tokenSecretProvider.SecretFromToken(token)
+	if err != nil {
+		return nil, err
+	}
+	return v.Validate(token, secretKey)
+}
+
+// ValidateSigned validates a non parsed token in string form
+func (v *JWTValidator) ValidateSigned(s string) (*jwt.JSONWebToken, error) {
 	if s == "" {
 		return nil, ErrTokenNotFound
 	}
@@ -125,7 +160,7 @@ func (v *JWTValidator) ValidateSigned(s string, secretKey interface{}) (*jwt.JSO
 	if err != nil {
 		return nil, err
 	}
-	return v.Validate(token, secretKey)
+	return v.ValidateToken(token)
 }
 
 // ValidateRequest validates the token within
