@@ -185,3 +185,12 @@ func (v *JWTValidator) Claims(r *http.Request, token *jwt.JSONWebToken, values .
 	}
 	return token.Claims(key, values...)
 }
+
+// ClaimsFromToken unmarshall the claims of the provided token
+func (v *JWTValidator) ClaimsFromToken(token *jwt.JSONWebToken, values ...interface{}) error {
+	key, err := v.config.tokenSecretProvider.SecretFromToken(token)
+	if err != nil {
+		return err
+	}
+	return token.Claims(key, values...)
+}
