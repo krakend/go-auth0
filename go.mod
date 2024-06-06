@@ -1,4 +1,4 @@
-module github.com/krakend/go-auth0
+module github.com/krakend/go-auth0/v2
 
 go 1.21
 
