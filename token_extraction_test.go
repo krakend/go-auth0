@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"gopkg.in/square/go-jose.v2"
-	"gopkg.in/square/go-jose.v2/jwt"
+	"github.com/go-jose/go-jose/v3"
+	"github.com/go-jose/go-jose/v3/jwt"
 )
 
 func TestFromRequestHeaderExtraction(t *testing.T) {
@@ -72,7 +72,7 @@ func TestFromMultipleExtraction(t *testing.T) {
 	for _, r := range []*http.Request{headerTokenRequest, paramTokenRequest, brokenParamTokenRequest} {
 		token, err := extractor.Extract(r)
 		if err != nil {
-			if r == brokenParamTokenRequest && err.Error() == "square/go-jose: compact JWS format must have three parts" {
+			if r == brokenParamTokenRequest && err.Error() == "go-jose/go-jose: compact JWS format must have three parts" {
 				// Checking that the JWT error is returned.
 				continue
 			}

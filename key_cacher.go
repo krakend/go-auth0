@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	jose "gopkg.in/square/go-jose.v2"
+	jose "github.com/go-jose/go-jose/v3"
 )
 
 var (
