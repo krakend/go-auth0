@@ -118,20 +118,23 @@ func NewValidatorWithLeeway(config Configuration, extractor RequestTokenExtracto
 	}
 }
 
-// Validate validates a jwt.JSONWebToken
-func (v *JWTValidator) Validate(token *jwt.JSONWebToken, secretKey interface{}) (*jwt.JSONWebToken, error) {
+func (v *JWTValidator) ValidateTokenHeaders(token *jwt.JSONWebToken) error {
 	if len(token.Headers) < 1 {
-		return nil, ErrNoJWTHeaders
+		return ErrNoJWTHeaders
 	}
 
 	// trust secret provider when sig alg not configured and skip check
 	if v.config.signIn != "" {
 		header := token.Headers[0]
 		if header.Algorithm != string(v.config.signIn) {
-			return nil, ErrInvalidAlgorithm
+			return ErrInvalidAlgorithm
 		}
 	}
+	return nil
+}
 
+// Validate validates a jwt.JSONWebToken
+func (v *JWTValidator) ValidateTokenClaims(token *jwt.JSONWebToken, secretKey interface{}) (*jwt.JSONWebToken, error) {
 	claims := jwt.Claims{}
 	if err := token.Claims(secretKey, &claims); err != nil {
 		return nil, err
@@ -144,11 +147,14 @@ func (v *JWTValidator) Validate(token *jwt.JSONWebToken, secretKey interface{}) 
 
 // ValidateSigned validates a non parsed token in string form
 func (v *JWTValidator) ValidateToken(token *jwt.JSONWebToken) (*jwt.JSONWebToken, error) {
+	if err := v.ValidateTokenHeaders(token); err != nil {
+		return nil, err
+	}
 	secretKey, err := v.config.tokenSecretProvider.SecretFromToken(token)
 	if err != nil {
 		return nil, err
 	}
-	return v.Validate(token, secretKey)
+	return v.ValidateTokenClaims(token, secretKey)
 }
 
 // ValidateSigned validates a non parsed token in string form
@@ -170,11 +176,14 @@ func (v *JWTValidator) ValidateRequest(r *http.Request) (*jwt.JSONWebToken, erro
 	if err != nil {
 		return nil, err
 	}
+	if err := v.ValidateTokenHeaders(token); err != nil {
+		return nil, err
+	}
 	key, err := v.config.secretProvider.GetSecret(r)
 	if err != nil {
 		return nil, err
 	}
-	return v.Validate(token, key)
+	return v.ValidateTokenClaims(token, key)
 }
 
 // Claims unmarshall the claims of the provided token
