@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-jose/go-jose/v3"
+	"github.com/go-jose/go-jose/v4"
 )
 
 func genTestConfiguration(configuration Configuration, token string) (*JWTValidator, *http.Request) {
