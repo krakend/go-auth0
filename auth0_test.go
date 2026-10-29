@@ -232,7 +232,7 @@ func TestValidateRequestAndClaims(t *testing.T) {
 				defaultIssuer,
 				time.Now().Add(24*time.Hour),
 				jose.HS256,
-				[]byte("invalid secret"),
+				[]byte("invalid-secret-invalid-secret-invalid-secret"),
 			),
 			expectedErrorMsg: "error in cryptographic primitive",
 		},
@@ -246,20 +246,20 @@ func TestValidateRequestAndClaims(t *testing.T) {
 
 			if test.expectedErrorMsg != "" {
 				if err == nil {
-					t.Errorf("Validation should have failed with error with substring: " + test.expectedErrorMsg)
+					t.Error("Validation should have failed with error with substring: " + test.expectedErrorMsg)
 				} else if !strings.Contains(err.Error(), test.expectedErrorMsg) {
-					t.Errorf("Validation should have failed with error with substring: " + test.expectedErrorMsg + ", but got: " + err.Error())
+					t.Error("Validation should have failed with error with substring: " + test.expectedErrorMsg + ", but got: " + err.Error())
 				}
 			} else {
 				if err != nil {
-					t.Errorf("Validation should not have failed with error, but got: " + err.Error())
+					t.Error("Validation should not have failed with error, but got: " + err.Error())
 				}
 
 				// claims should be unmarshalled successfully
 				claims := map[string]interface{}{}
 				err = validator.Claims(req, jwt, &claims)
 				if err != nil {
-					t.Errorf("Claims unmarshall should not have failed with error, but got: " + err.Error())
+					t.Error("Claims unmarshall should not have failed with error, but got: " + err.Error())
 				}
 			}
 		})

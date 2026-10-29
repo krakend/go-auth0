@@ -25,7 +25,7 @@ func TestFromRequestHeaderExtraction(t *testing.T) {
 	}
 
 	claims := jwt.Claims{}
-	err = token.Claims([]byte("secret"), &claims)
+	err = token.Claims(defaultSecret, &claims)
 	if err != nil {
 		t.Errorf("Claims should be decoded correctly with default token: %q \n", err)
 		t.FailNow()
@@ -48,7 +48,7 @@ func TestFromRequestParamsExtraction(t *testing.T) {
 	}
 
 	claims := jwt.Claims{}
-	err = token.Claims([]byte("secret"), &claims)
+	err = token.Claims(defaultSecret, &claims)
 	if err != nil {
 		t.Errorf("Claims should be decoded correctly with default token: %q \n", err)
 		t.FailNow()
@@ -81,7 +81,7 @@ func TestFromMultipleExtraction(t *testing.T) {
 		}
 
 		claims := jwt.Claims{}
-		err = token.Claims([]byte("secret"), &claims)
+		err = token.Claims(defaultSecret, &claims)
 		if err != nil {
 			t.Errorf("Claims should be decoded correctly with default token: %q \n", err)
 			t.FailNow()

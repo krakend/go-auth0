@@ -23,7 +23,7 @@ var (
 	defaultIssuer   = "issuer"
 
 	// The default generated token by Chrome jwt extension
-	defaultSecret         = []byte("secret")
+	defaultSecret         = []byte("secret-secret-secret-secret-secret-secret-secret-secret-secret-s")
 	defaultSecretProvider = NewKeyProvider(defaultSecret)
 
 	defaultSecretRS256         = genRSASSAJWK(jose.RS256, "")
