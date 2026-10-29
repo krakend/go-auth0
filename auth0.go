@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-jose/go-jose/v3"
-	"github.com/go-jose/go-jose/v3/jwt"
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 )
 
 // SecretProvider will provide everything
@@ -69,7 +69,7 @@ func NewConfiguration(provider SecretProvider, audience []string, issuer string,
 	}
 	return Configuration{
 		secretProvider:      provider,
-		expectedClaims:      jwt.Expected{Issuer: issuer, Audience: audience},
+		expectedClaims:      jwt.Expected{Issuer: issuer, AnyAudience: audience},
 		signIn:              method,
 		tokenSecretProvider: tokenSecretProvider,
 	}
@@ -83,7 +83,7 @@ func NewConfigurationTrustProvider(provider SecretProvider, audience []string, i
 	}
 	return Configuration{
 		secretProvider:      provider,
-		expectedClaims:      jwt.Expected{Issuer: issuer, Audience: audience},
+		expectedClaims:      jwt.Expected{Issuer: issuer, AnyAudience: audience},
 		tokenSecretProvider: tokenSecretProvider,
 	}
 }
@@ -162,7 +162,7 @@ func (v *JWTValidator) ValidateSigned(s string) (*jwt.JSONWebToken, error) {
 	if s == "" {
 		return nil, ErrTokenNotFound
 	}
-	token, err := jwt.ParseSigned(s)
+	token, err := jwt.ParseSigned(s, signatureAlgorithms)
 	if err != nil {
 		return nil, err
 	}

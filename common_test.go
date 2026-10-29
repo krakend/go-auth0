@@ -11,8 +11,8 @@ import (
 	"net/http/httptest"
 	"time"
 
-	jose "github.com/go-jose/go-jose/v3"
-	"github.com/go-jose/go-jose/v3/jwt"
+	jose "github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 )
 
 var (
@@ -23,7 +23,7 @@ var (
 	defaultIssuer   = "issuer"
 
 	// The default generated token by Chrome jwt extension
-	defaultSecret         = []byte("secret")
+	defaultSecret         = []byte("secret-secret-secret-secret-secret-secret-secret-secret-secret-s")
 	defaultSecretProvider = NewKeyProvider(defaultSecret)
 
 	defaultSecretRS256         = genRSASSAJWK(jose.RS256, "")
@@ -87,7 +87,7 @@ func getTestToken(audience []string, issuer string, expTime time.Time, alg jose.
 		Expiry:   jwt.NewNumericDate(expTime),
 	}
 
-	raw, err := jwt.Signed(signer).Claims(cl).CompactSerialize()
+	raw, err := jwt.Signed(signer).Claims(cl).Serialize()
 	if err != nil {
 		panic(err)
 	}
@@ -107,7 +107,7 @@ func getTestTokenWithKid(audience []string, issuer string, expTime time.Time, al
 		Expiry:   jwt.NewNumericDate(expTime),
 	}
 
-	raw, err := jwt.Signed(signer).Claims(cl).CompactSerialize()
+	raw, err := jwt.Signed(signer).Claims(cl).Serialize()
 	if err != nil {
 		panic(err)
 	}

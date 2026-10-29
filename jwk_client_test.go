@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-jose/go-jose/v3"
+	"github.com/go-jose/go-jose/v4"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -73,7 +73,7 @@ func TestJWKDownloadKeySuccess(t *testing.T) {
 
 			_, err = client.GetSecret(req)
 			if err != nil {
-				t.Errorf("Should be considered as valid, but failed with error: " + err.Error())
+				t.Error("Should be considered as valid, but failed with error: " + err.Error())
 			}
 		}
 	}
@@ -206,13 +206,13 @@ func TestGetKeyOfJWKClient(t *testing.T) {
 			_, err := client.GetKey("key1")
 			if test.expectedErrorMsg != "" {
 				if err == nil {
-					t.Errorf("Validation should have failed with error with substring: " + test.expectedErrorMsg)
+					t.Error("Validation should have failed with error with substring: " + test.expectedErrorMsg)
 				} else if !strings.Contains(err.Error(), test.expectedErrorMsg) {
-					t.Errorf("Validation should have failed with error with substring: " + test.expectedErrorMsg + ", but got: " + err.Error())
+					t.Error("Validation should have failed with error with substring: " + test.expectedErrorMsg + ", but got: " + err.Error())
 				}
 			} else {
 				if err != nil {
-					t.Errorf("Validation should not have failed with error, but got: " + err.Error())
+					t.Error("Validation should not have failed with error, but got: " + err.Error())
 				}
 			}
 		})
