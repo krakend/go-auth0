@@ -162,7 +162,7 @@ func (v *JWTValidator) ValidateSigned(s string) (*jwt.JSONWebToken, error) {
 	if s == "" {
 		return nil, ErrTokenNotFound
 	}
-	token, err := jwt.ParseSigned(s)
+	token, err := jwt.ParseSigned(s, []jose.SignatureAlgorithm{v.config.signIn})
 	if err != nil {
 		return nil, err
 	}
