@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
 )
 
@@ -12,6 +13,22 @@ var (
 	// ErrTokenNotFound is returned by the ValidateRequest if the token was not
 	// found in the request.
 	ErrTokenNotFound = errors.New("Token not found")
+
+	signatureAlgorithms = []jose.SignatureAlgorithm{
+		jose.EdDSA,
+		jose.HS256,
+		jose.HS384,
+		jose.HS512,
+		jose.RS256,
+		jose.RS384,
+		jose.RS512,
+		jose.ES256,
+		jose.ES384,
+		jose.ES512,
+		jose.PS256,
+		jose.PS384,
+		jose.PS512,
+	}
 )
 
 // RequestTokenExtractor can extract a JWT
@@ -57,7 +74,7 @@ func FromHeader(r *http.Request) (*jwt.JSONWebToken, error) {
 	if raw == "" {
 		return nil, ErrTokenNotFound
 	}
-	return jwt.ParseSigned(raw)
+	return jwt.ParseSigned(raw, signatureAlgorithms)
 }
 
 // FromParams returns the JWT when passed as the URL query param "token".
@@ -66,5 +83,5 @@ func FromParams(r *http.Request) (*jwt.JSONWebToken, error) {
 	if raw == "" {
 		return nil, ErrTokenNotFound
 	}
-	return jwt.ParseSigned(raw)
+	return jwt.ParseSigned(raw, signatureAlgorithms)
 }
